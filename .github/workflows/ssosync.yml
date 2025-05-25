@@ -1,0 +1,52 @@
+name: Build Go Program and Run Shell Command with AWS Auth
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering of the workflow
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # This step implicitly handles 'git clone https://github.com/awslabs/ssosync.git'
+        # and 'cd ssosync/' by checking out the repository into the runner's workspace.
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22' # Specify the Go version you want to use
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
+          aws-region: {{ secrets.AWS_REGION }} # Replace with your desired AWS region
+          
+      - name: Create Google Credentials File
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
+        # This step creates a file named 'credentials.json' from the GOOGLE_CREDENTIALS secret.
+        # Ensure the GOOGLE_CREDENTIALS secret contains the full JSON content.
+
+      - name: Build Go Program using make
+        run: make go-build # Executes the 'make go-build' command as provided
+
+      - name: Execute ssosync command
+        run: |
+          echo "Go program built successfully using make!"
+          echo "Now executing ssosync with provided parameters..."
+          ./ssosync \
+            -t ${{ secrets.PROVISION_SECRET }} \
+            -e ${{ secrets.SCIM_API_ENDPOINT }} \
+            -u ${{ secrets.ADMIN_MAIL }} \
+            --google-credentials credentials.json \
+            --sync-method groups \
+            --identity-store-id ${{ secrets.IDENTITY_STORE_ID }} \
+            --debug \
+            --region us-east-1
+          echo "ssosync command execution complete."
