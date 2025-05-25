@@ -1,4 +1,4 @@
-name: Build Go Program and Run Shell Command with AWS Auth
+name: SYNC-AWS-GOOGLE_WORKSPACE
 
 on:
   push:
@@ -28,10 +28,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
           aws-region: ${{ secrets.AWS_REGION }} # Replace with your desired AWS region
           
-      - name: Create Google Credentials File
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > credentials.json
-        # This step creates a file named 'credentials.json' from the GOOGLE_CREDENTIALS secret.
-        # Ensure the GOOGLE_CREDENTIALS secret contains the full JSON content.
+      - name: Download JSON file from S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }} # Replace with your AWS region if different, or use a secret here too
+        run: |
+          # The S3 bucket name is taken from a GitHub secret named 'S3_BUCKET_NAME'.
+          # The file will be downloaded to the root of your runner's workspace as 'credentials.json'.
+          aws s3 cp s3://${{ secrets.AWS_S3_BUCKET }}/credentials.json ./credentials.json
 
       - name: Build Go Program using make
         run: make go-build # Executes the 'make go-build' command as provided
