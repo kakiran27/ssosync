@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual triggering of the workflow
+  workflow_dispatch: 
 
 jobs:
   build-and-run:
@@ -13,33 +13,32 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # This step implicitly handles 'git clone https://github.com/awslabs/ssosync.git'
-        # and 'cd ssosync/' by checking out the repository into the runner's workspace.
+
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22' # Specify the Go version you want to use
+          go-version: '1.22' 
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }} # Replace with your desired AWS region
+          aws-region: ${{ secrets.AWS_REGION }} 
           
       - name: Download JSON file from S3
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_SECRET_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }} # Replace with your AWS region if different, or use a secret here too
+          AWS_REGION: ${{ secrets.AWS_REGION }} 
         run: |
           # The S3 bucket name is taken from a GitHub secret named 'S3_BUCKET_NAME'.
           # The file will be downloaded to the root of your runner's workspace as 'credentials.json'.
           aws s3 cp s3://${{ secrets.AWS_S3_BUCKET }}/credentials.json ./credentials.json
 
       - name: Build Go Program using make
-        run: make go-build # Executes the 'make go-build' command as provided
+        run: make go-build 
 
       - name: Execute ssosync command
         run: |
@@ -54,4 +53,4 @@ jobs:
             --identity-store-id ${{ secrets.IDENTITY_STORE_ID }} \
             --debug \
             --region us-east-1
-          echo "ssosync command execution complete."
+          echo "Google Workspace groups & Users sync with AWS completed"
